@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Атлас пептидов · Реестр исследований</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2F6F62">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF0E9;
+    --paper-alt:#E4E7DC;
+    --card:#F8F9F4;
+    --ink:#182019;
+    --ink-soft:#4A5248;
+    --line:#D3D6C7;
+    --teal:#2F6F62;
+    --teal-bg:#DCEAE4;
+    --amber:#9C7328;
+    --amber-bg:#F1E4C8;
+    --rust:#9C3B3B;
+    --rust-bg:#F1DCD8;
+    --slate:#3D5A73;
+    --slate-bg:#DCE4EA;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    line-height:1.55;
+  }
+  ::selection{background:var(--teal); color:#fff;}
+
+  /* HEADER */
+  header{
+    padding:56px 24px 32px;
+    max-width:1180px;
+    margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--teal);
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:7px;height:7px;border-radius:50%;
+    background:var(--teal);
+    display:inline-block;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-optical-sizing:auto;
+    font-weight:600;
+    font-size:clamp(34px,5vw,54px);
+    line-height:1.05;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  h1 em{
+    font-style:italic;
+    font-weight:500;
+    color:var(--teal);
+  }
+  .subtitle{
+    max-width:640px;
+    color:var(--ink-soft);
+    font-size:16px;
+    margin:0 0 26px;
+  }
+  .meta-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 22px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .meta-row span b{color:var(--ink); font-weight:600;}
+
+  /* FILTER BAR */
+  .filterbar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(238,240,233,0.94);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+    padding:16px 24px;
+  }
+  .filterbar-inner{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:flex-start;
+  }
+  .filter-group{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .filter-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+  }
+  select, input[type=text]{
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    padding:8px 12px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    outline:none;
+  }
+  select:focus, input[type=text]:focus{border-color:var(--teal);}
+  input[type=text]{width:220px;}
+  .search-group{flex:1; min-width:200px;}
+  .search-group input{width:100%;}
+  .clear-btn{
+    align-self:flex-end;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    background:none;
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:8px 14px;
+    cursor:pointer;
+  }
+  .clear-btn:hover{border-color:var(--rust); color:var(--rust);}
+  .count-line{
+    max-width:1180px;
+    margin:14px auto 0;
+    padding:0 24px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+
+  /* GRID */
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:24px 24px 100px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  @media(max-width:820px){ main{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px 22px;
+  }
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .card-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:21px;
+    line-height:1.15;
+  }
+  .card-alias{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:10px 0 12px;
+  }
+  .tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.03em;
+    padding:3px 8px;
+    border-radius:20px;
+    background:var(--paper-alt);
+    color:var(--ink-soft);
+  }
+  .badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:14px;
+  }
+  .badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:600;
+    padding:4px 9px;
+    border-radius:6px;
+  }
+  .b-teal{background:var(--teal-bg); color:var(--teal);}
+  .b-amber{background:var(--amber-bg); color:var(--amber);}
+  .b-rust{background:var(--rust-bg); color:var(--rust);}
+  .b-slate{background:var(--slate-bg); color:var(--slate);}
+
+  .desc{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+
+  /* evidence gauge */
+  .gauge-wrap{margin-bottom:16px;}
+  .gauge-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .gauge{
+    display:flex;
+    gap:3px;
+  }
+  .gauge-seg{
+    flex:1;
+    height:6px;
+    border-radius:3px;
+    background:var(--line);
+  }
+  .gauge-seg.on{background:var(--teal);}
+  .gauge-seg.on-amber{background:var(--amber);}
+
+  details{
+    border-top:1px dashed var(--line);
+    padding-top:12px;
+  }
+  summary{
+    cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--teal);
+    font-weight:600;
+    list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"+ ";}
+  details[open] summary::before{content:"− ";}
+
+  .study{
+    margin-top:14px;
+    padding:12px 14px;
+    background:var(--paper-alt);
+    border-radius:8px;
+  }
+  .study + .study{margin-top:8px;}
+  .study-title{font-weight:600; font-size:13.5px; margin-bottom:3px;}
+  .study-meta{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .study-summary{font-size:13px; color:var(--ink-soft); margin-bottom:6px;}
+  .study a{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--teal);
+    text-decoration:none;
+    border-bottom:1px solid var(--teal);
+  }
+  .study a:hover{opacity:.7;}
+
+  .safety{
+    margin-top:14px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    border-left:2px solid var(--amber);
+    padding-left:10px;
+  }
+  .safety b{color:var(--ink);}
+
+  .no-results{
+    grid-column:1/-1;
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-soft);
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+  }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px 60px;
+    color:var(--ink-soft);
+    font-size:12.5px;
+  }
+  footer .note{
+    border-top:1px solid var(--line);
+    padding-top:20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">живой реестр · пептиды и продление жизни</div>
+  <h1>Атлас пептидов<br><em>для курсового проекта</em></h1>
+  <p class="subtitle">Структурированная коллекция исследовательских пептидов, применяемых в контексте долголетия, восстановления и когнитивного здоровья — с уровнем доказательности, регуляторным статусом и позицией в списке WADA.</p>
+  <div class="meta-row">
+    <span>Пептидов в реестре: <b id="totalCount">–</b></span>
+    <span>Последнее обновление: <b>21.07.2026</b></span>
+    <span>Обновляется вручную по запросу</span>
+  </div>
+</header>
+
+<div class="filterbar">
+  <div class="filterbar-inner">
+    <div class="filter-group search-group">
+      <label class="filter-label">Поиск</label>
+      <input type="text" id="searchInput" placeholder="Название пептида…">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Группа действия</label>
+      <select id="groupFilter"><option value="all">Все группы</option></select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Доказательность</label>
+      <select id="evidenceFilter">
+        <option value="all">Любая</option>
+        <option value="robust">Доказана (RCT/FDA)</option>
+        <option value="limited">Ограниченная</option>
+        <option value="preclinical">Доклиническая</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Регуляторный статус</label>
+      <select id="regFilter">
+        <option value="all">Любой</option>
+        <option value="approved">Одобрен (где-либо)</option>
+        <option value="not_approved">Не одобрен</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">WADA</label>
+      <select id="wadaFilter">
+        <option value="all">Любой</option>
+        <option value="banned">Запрещён</option>
+        <option value="monitored">Мониторится</option>
+        <option value="not_banned">Не запрещён</option>
+        <option value="unclear">Неоднозначно</option>
+      </select>
+    </div>
+    <button class="clear-btn" id="clearBtn">Сбросить фильтры</button>
+  </div>
+</div>
+
+<div class="count-line" id="countLine"></div>
+
+<main id="grid"></main>
+
+<footer>
+  <div class="note">
+    <b>Как читать карточки:</b> шкала «доказательность» — это не гарантия эффекта, а честная оценка качества данных (доклиника → ограниченные исследования на людях → крупные РКИ/одобрение регулятора). Статус WADA относится только к соревнующимся спортсменам под юрисдикцией WADA и может измениться на ежегодном пересмотре списка (январь). Ссылки ведут на источники для самостоятельной проверки — реестр не заменяет консультацию врача. Список не является инструкцией по применению.
+  </div>
+</footer>
+
+<script>
+const DATA = [
+  {
+    name:"BPC-157",
+    alias:"Body Protection Compound-157 · пентадекапептид",
+    groups:["Регенерация"],
+    evidence:"preclinical",
+    evidenceNote:"Сотни исследований на животных, но опубликованных контролируемых испытаний на людях по-прежнему нет",
+    regulatory:{status:"not_approved", detail:"Не одобрен FDA. В 2023 г. включён в категорию 2 веществ, компаундирование которых ограничено из-за недостатка данных о безопасности."},
+    wada:{status:"banned", detail:"Категория S0 (неодобренные вещества) — запрещён всегда, вне зависимости от соревновательного статуса."},
+    desc:"Фрагмент белка, обнаруженного в желудочном соке человека. Один из самых обсуждаемых пептидов в области заживления тканей и ЖКТ — при огромном объёме доклиники человеческая доказательная база остаётся крайне тонкой.",
+    studies:[
+      {title:"Систематический обзор по спортивной медицине (2025)", meta:"AJSM · скрининг 544 статей", summary:"Подтвердил стабильный положительный эффект на моделях животных при полном отсутствии контролируемых данных на людях.", url:"https://thepeptidecatalog.com/articles/bpc-157-clinical-trials"},
+      {title:"Пилотное исследование безопасности в/в введения", meta:"2025 · Lee & Burgess · n=2", summary:"Внутривенное введение до 20 мг переносилось без изменений сердечных, печёночных, почечных биомаркеров; эффективность не изучалась.", url:"https://irvine.health/blogs/bpc157-update/"},
+      {title:"Первое рандомизированное контролируемое исследование", meta:"NCT07437547 · набор с февраля 2026", summary:"Hudson Biotech начал набор 120 участников для двойного слепого плацебо-контролируемого испытания при травме подколенного сухожилия — первое РКИ такого рода.", url:"https://peptiq.io/blog/bpc-157-first-controlled-human-trial-recruiting"}
+    ],
+    safety:"Долгосрочная безопасность у человека не установлена; продаётся как «только для исследований». Наибольший объём доклинических данных получен одной хорватской научной группой."
+  },
+  {
+    name:"TB-500",
+    alias:"синтетический фрагмент тимозина бета-4 (Ac-LKKTETQ)",
+    groups:["Регенерация"],
+    evidence:"preclinical",
+    evidenceNote:"Сильные доклинические данные; человеческие РКИ существуют только для полноразмерного белка в глазных каплях",
+    regulatory:{status:"not_approved", detail:"Не одобрен FDA; включён в список веществ с потенциальными рисками безопасности при компаундировании."},
+    wada:{status:"banned", detail:"Категория S2 (факторы роста) — тимозин бета-4 и его производные, включая TB-500, запрещены явно."},
+    desc:"Копирует активный (актин-связывающий) участок природного белка тимозина бета-4. Большая часть механистических данных получена на полноразмерном белке, а не на короткой инъекционной версии TB-500.",
+    studies:[
+      {title:"Скоупинг-обзор по тканевому заживлению", meta:"MDPI, июнь 2026", summary:"Картирует всю доступную литературу по TB4/TB-500: подтверждает обилие доклинических данных и почти полное отсутствие клинических испытаний фрагмента.", url:"https://www.mdpi.com/2076-3417/16/12/6202"},
+      {title:"Фаза II по сухости глаз (RGN-259)", meta:"Sosne & Ousler, Cornea 2015", summary:"Рандомизированное плацебо-контролируемое испытание топической формы полноразмерного тимозина бета-4 показало улучшение симптомов сухого глаза.", url:"https://www.mdpi.com/2076-3417/16/12/6202"}
+    ],
+    safety:"В доклинике профиль переносимости благоприятный (местные реакции, редкая головная боль), но фармакокинетика синтетического фрагмента у человека не описана."
+  },
+  {
+    name:"GHK-Cu",
+    alias:"глицил-L-гистидил-L-лизин + медь",
+    groups:["Регенерация","Мозг"],
+    evidence:"limited",
+    evidenceNote:"Хорошо изучен в клеточных и дерматологических моделях; влияет на экспрессию тысяч генов",
+    regulatory:{status:"approved", detail:"Как лекарство не одобрен нигде; широко используется как разрешённый косметический ингредиент (не требует одобрения FDA как drug)."},
+    wada:{status:"unclear", detail:"Явно не назван в списке WADA 2026; медь-пептидный комплекс не относится к категориям гормонов роста."},
+    desc:"Природный трипептид-переносчик меди, снижающийся с возрастом. Изучается на фибробластах и моделях ран за счёт влияния на коллаген, эластин и антиоксидантные пути.",
+    studies:[
+      {title:"Регенеративные свойства GHK-Cu в свете новых генетических данных", meta:"Pickart, Int J Mol Sci 2018", summary:"Обзор описывает модуляцию экспрессии генов, связанных с ремоделированием тканей и антиоксидантной защитой, преимущественно на клеточных моделях.", url:"https://www.peptidesciences.com/peptide-research/synergistic-regeneration-bpc-157-thymosin-beta-4-and-ghk-cu-in-healing"}
+    ],
+    safety:"Один из наиболее изученных «космецевтических» пептидов по местной переносимости; системные данные при инъекционном применении ограничены."
+  },
+  {
+    name:"Semax",
+    alias:"аналог АКТГ(4–10), интраназально",
+    groups:["Мозг"],
+    evidence:"limited",
+    evidenceNote:"Клинически изучен в России при инсульте; доказательная база на здоровых людях тоньше",
+    regulatory:{status:"approved", detail:"Зарегистрирован как ноотропный препарат в России; не одобрен FDA/EMA."},
+    wada:{status:"not_banned", detail:"Не значится в списке WADA 2026."},
+    desc:"Пептид, повышающий экспрессию BDNF в гиппокампе. В российской клинической практике изучался при ишемическом инсульте и других состояниях ЦНС; за пределами постсоветской литературы данных существенно меньше.",
+    studies:[
+      {title:"Обзор BDNF-эффектов Semax", meta:"Grigoriev et al., Neuropeptides, 2024", summary:"Синтез девяти исследований на грызунах: повторное введение повышает не только уровень BDNF, но и плотность рецепторов TrkB в префронтальной коре.", url:"https://spartanpeptides.com/blog/enhancing-mental-performance-with-semax-and-selank/"},
+      {title:"Нейропротекция при окислительном стрессе", meta:"Tomasello et al., Bioinorganic Chemistry & Applications, 2025", summary:"Показано снижение продукции активных форм кислорода, связанных с взаимодействием амилоид-бета/медь — механизм, отдельный от эффекта на BDNF.", url:"https://meto.co/blog/semax-selank-cognitive-peptides"}
+    ],
+    safety:"Интраназальный путь используется десятилетиями в РФ без серьёзных сигналов безопасности; независимых западных РКИ на здоровых добровольцах немного."
+  },
+  {
+    name:"Selank",
+    alias:"аналог тафтсина, гептапептид",
+    groups:["Мозг"],
+    evidence:"limited",
+    evidenceNote:"Изучен при тревожных расстройствах и неврастении в РФ",
+    regulatory:{status:"approved", detail:"Зарегистрирован как анксиолитик в России; не одобрен FDA/EMA."},
+    wada:{status:"not_banned", detail:"Не значится в списке WADA 2026."},
+    desc:"Синтетический аналог тафтсина — иммуномодулирующего тетрапептида. Позиционируется как анксиолитик с дополнительным ноотропным профилем через модуляцию серотонинового транспортера.",
+    studies:[
+      {title:"Клинические исследования при генерализованном тревожном расстройстве", meta:"обзорные данные РФ", summary:"Сообщается об анксиолитическом и антиастеническом эффекте в клинической популяции; методология и размеры выборок сопоставимы с ранней постсоветской психофармакологией.", url:"https://www.helimeds.com/blog/semax-vs-selank"},
+      {title:"Взаимодействие с транспортёром серотонина (SERT)", meta:"доклиническое исследование, 2025", summary:"На модели хронического стресса показано влияние на SERT — один из предполагаемых механизмов анксиолитического эффекта.", url:"https://spartanpeptides.com/blog/enhancing-mental-performance-with-semax-and-selank/"}
+    ],
+    safety:"Профиль переносимости в клинической практике РФ считается благоприятным; независимой западной репликации немного."
+  },
+  {
+    name:"Epithalon",
+    alias:"Ala-Glu-Asp-Gly, аналог эпиталамина",
+    groups:["Долголетие"],
+    evidence:"preclinical",
+    evidenceNote:"Активация теломеразы показана в культуре клеток; данные на людях — в основном когортные, без крупных РКИ",
+    regulatory:{status:"not_approved", detail:"Не одобрен ни одним регулятором как лекарство."},
+    wada:{status:"unclear", detail:"Явно не назван; теоретически может подпадать под общую формулировку S0 как неодобренное вещество."},
+    desc:"Синтетический тетрапептид на основе пептида эпифиза эпиталамина. Наиболее изученный «теломеразный» пептид: базовые данные получены преимущественно одной научной группой (Хавинсон и соавт.), что ограничивает независимую воспроизводимость.",
+    studies:[
+      {title:"Индукция теломеразы в фетальных фибробластах", meta:"Khavinson et al., Bull Exp Biol Med, 2003", summary:"Основополагающая работа: показана активация теломеразы и удлинение теломер в культуре клеток человека сверх предела Хейфлика.", url:"https://meto.co/blog/epitalon-telomere-longevity-peptide"},
+      {title:"Независимая репликация на нормальных и опухолевых клеточных линиях", meta:"Brunel University London, Biogerontology, 2025", summary:"Первая независимая от группы Хавинсона лаборатория подтвердила удлинение теломер в культуре, хотя нормальным клеткам требовалось около трёх недель для эффекта против четырёх дней у опухолевых.", url:"https://meto.co/blog/epitalon-telomere-longevity-peptide"}
+    ],
+    safety:"Данные о безопасности у человека ограничены наблюдательными когортами; долгосрочные плацебо-контролируемые данные отсутствуют."
+  },
+  {
+    name:"Sermorelin",
+    alias:"GHRH(1–29), аналог гормона роста",
+    groups:["Гормон роста","Долголетие"],
+    evidence:"limited",
+    evidenceNote:"Ранее одобрен у детей; у взрослых — единичное небольшое исследование состава тела",
+    regulatory:{status:"approved", detail:"Был одобрен FDA (Geref, 1997) для детей с дефицитом гормона роста; отозван производителем в 2008 г. по коммерческим причинам. Сейчас доступен только через компаундирующие аптеки."},
+    wada:{status:"banned", detail:"Категория S2 — все гормон-рилизинг-пептиды (GHRH-аналоги) запрещены явно и постоянно."},
+    desc:"Короткий фрагмент гормона роста рилизинг-гормона, стимулирующий естественную пульсирующую секрецию СТГ гипофизом. Клинически валиден для детской эндокринологии; протоколы для взрослых («анти-эйдж») — офф-лейбл.",
+    studies:[
+      {title:"Исследование состава тела у взрослых", meta:"упоминается как единственное на ~19 участниках", summary:"Небольшое клиническое исследование эффектов на состав тела у взрослых — существенно меньшая доказательная база, чем у тезаморелина.", url:"https://peptidefox.com/content/tesamorelin"}
+    ],
+    safety:"Считается более физиологичным и безопасным, чем экзогенный СТГ, за счёт сохранения обратной связи гипофиза; возможны головная боль и реакции в месте инъекции."
+  },
+  {
+    name:"Tesamorelin",
+    alias:"Egrifta · стабилизированный GHRH(1–44)",
+    groups:["Гормон роста","Метаболизм"],
+    evidence:"robust",
+    evidenceNote:"Единственный GH-рилизинг-пептид с полным одобрением FDA на основании двух РКИ фазы III",
+    regulatory:{status:"approved", detail:"Одобрен FDA в 2010 г. (Egrifta) для лечения липодистрофии, ассоциированной с ВИЧ."},
+    wada:{status:"banned", detail:"Категория S2 — запрещён явно, вне зависимости от медицинского показания вне контекста ТИ (TUE)."},
+    desc:"Стабилизированный аналог полноразмерного GHRH, устойчивый к разрушению ферментом DPP-IV. Обладает самой сильной клинической доказательной базой среди всех гормон-рилизинг-пептидов.",
+    studies:[
+      {title:"Метаболические эффекты у пациентов с ВИЧ-липодистрофией", meta:"Falutz et al., NEJM, 2007", summary:"Пивотальное РКИ, легшее в основу одобрения FDA: снижение висцерального жира на 15,2% против плацебо за 26 недель.", url:"https://ribocore.com/research/tesamorelin-fda-approved-gh-secretagogue"},
+      {title:"Объединённые данные двух испытаний фазы III", meta:"816 пациентов", summary:"Крупнейшая доказательная база среди секретагогов гормона роста: снижение висцерального жира на 15–20%, эффект в основном обратим после отмены.", url:"https://peptidefox.com/content/tesamorelin"}
+    ],
+    safety:"Наиболее подтверждённый профиль безопасности в классе; типичные эффекты — реакции в месте инъекции, отёки, артралгии."
+  },
+  {
+    name:"CJC-1295 / Ipamorelin",
+    alias:"GHRH-аналог пролонгированного действия + GHRP",
+    groups:["Гормон роста"],
+    evidence:"preclinical",
+    evidenceNote:"CJC-1295 без DAC практически не имеет опубликованных испытаний на людях",
+    regulatory:{status:"not_approved", detail:"Не одобрены ни в одной юрисдикции как лекарство; продаются как «только для исследований»."},
+    wada:{status:"banned", detail:"Категория S2 — оба вещества названы явно как секретагоги гормона роста, запрет действует постоянно."},
+    desc:"Популярная комбинация: CJC-1295 продлевает импульс выброса гормона роста, ипаморелин избирательно стимулирует грелиновый рецептор. Несмотря на широкое распространение в оздоровительных протоколах, независимых человеческих испытаний комбинации практически нет.",
+    studies:[
+      {title:"Сравнительный обзор GH-секретагогов", meta:"PeptideFox, 2026", summary:"Констатирует отсутствие опубликованных РКИ для CJC-1295 без DAC и указывает на разрыв между популярностью протокола и объёмом доказательной базы.", url:"https://peptidefox.com/content/tesamorelin"}
+    ],
+    safety:"Данные о долгосрочной безопасности у человека практически отсутствуют; основной источник информации — доклиника и неконтролируемый опыт применения."
+  },
+  {
+    name:"MOTS-c",
+    alias:"митохондриальный пептид (кодируется мтДНК)",
+    groups:["Митохондрии","Выносливость","Метаболизм"],
+    evidence:"preclinical",
+    evidenceNote:"Уникальный митохондриально-кодируемый пептид; данные на людях единичны",
+    regulatory:{status:"not_approved", detail:"Не одобрен как лекарство ни в одной юрисдикции."},
+    wada:{status:"unclear", detail:"Явно не назван в списке WADA; как метаболический регулятор потенциально может привлечь внимание в будущих пересмотрах."},
+    desc:"Один из немногих известных пептидов, кодируемых митохондриальной, а не ядерной ДНК. В моделях животных регулирует использование жира, чувствительность к инсулину и реакцию на метаболический стресс.",
+    studies:[
+      {title:"Обзор митохондриальных пептидов MOTS-c и SS-31", meta:"UAE Peptides, 2025", summary:"Описывает MOTS-c как метаболический регулятор с данными об эндокринном действии на моделях животных; человеческая доказательная база называется предварительной.", url:"https://uaepeptides.com/mitochondrial-health-motsc-ss31/"}
+    ],
+    safety:"Систематических данных о безопасности у человека недостаточно для содержательных выводов."
+  },
+  {
+    name:"SS-31 (Elamipretide)",
+    alias:"тетрапептид, связывающий кардиолипин",
+    groups:["Митохондрии","Выносливость"],
+    evidence:"limited",
+    evidenceNote:"Несколько испытаний фазы II/III при митохондриальных заболеваниях; для \"общего антиэйджинга\" отдельных РКИ нет",
+    regulatory:{status:"not_approved", detail:"Исследуемый препарат (Stealth BioTherapeutics), одобрения FDA/EMA пока не получил."},
+    wada:{status:"unclear", detail:"Явно не назван в списке WADA; не относится к типичным категориям стимуляции гормона роста."},
+    desc:"Связывается с кардиолипином внутренней митохондриальной мембраны, стабилизируя электрон-транспортную цепь. Изучается при синдроме Барта, митохондриальной миопатии, сердечной недостаточности и возрастной макулярной дегенерации.",
+    studies:[
+      {title:"Молекулярный механизм действия SS-31", meta:"biorxiv, структурное исследование", summary:"Показывает связывание с кардиолипином и модуляцию электростатики мембраны как основной механизм, отличный от простого антиоксидантного действия.", url:"https://www.biorxiv.org/content/10.1101/735001.full.pdf"},
+      {title:"Испытание при синдроме Фридрейха", meta:"Investigator-Initiated Study, ClinicalTrials.gov", summary:"Клинические испытания при нескольких митохондриальных нарушениях показывают хорошую переносимость и предварительные признаки пользы.", url:"https://cdn.clinicaltrials.gov/large-docs/74/NCT05168774/Prot_SAP_000.pdf"}
+    ],
+    safety:"В клинических испытаниях при орфанных заболеваниях профиль переносимости благоприятный; данных по здоровым людям для целей долголетия существенно меньше."
+  },
+  {
+    name:"PT-141 (Bremelanotide)",
+    alias:"Vyleesi · агонист меланокортиновых рецепторов",
+    groups:["Половое здоровье"],
+    evidence:"robust",
+    evidenceNote:"Одобрен FDA на основании двух РКИ фазы III (RECONNECT)",
+    regulatory:{status:"approved", detail:"Одобрен FDA в 2019 г. как Vyleesi для лечения гипоактивного расстройства полового влечения (ГРПВ) у женщин в пременопаузе."},
+    wada:{status:"not_banned", detail:"Не значится в списке WADA — не относится к веществам, повышающим спортивные результаты."},
+    desc:"Уточнённый производный меланотана II, нацеленный на центральные рецепторы MC3R/MC4R в гипоталамусе, а не на периферический сосудистый механизм. Единственный меланокортиновый пептид, прошедший полный цикл регистрации.",
+    studies:[
+      {title:"Испытания RECONNECT (фаза III)", meta:"Palatin Technologies, основание для одобрения FDA", summary:"Два рандомизированных плацебо-контролируемых исследования подтвердили эффективность и стали основанием для регистрации препарата.", url:"https://www.peptidessource.com/pt-141-bremelanotide-research-melanocortin-receptor-pathways-cns-mechanism-studies/"}
+    ],
+    safety:"Наиболее изученный из меланокортиновых пептидов; типичные эффекты — тошнота, приливы, преходящее повышение давления."
+  },
+  {
+    name:"Melanotan II",
+    alias:"неселективный агонист меланокортиновых рецепторов",
+    groups:["Половое здоровье"],
+    evidence:"preclinical",
+    evidenceNote:"Предшественник PT-141; более широкий и менее изученный профиль эффектов",
+    regulatory:{status:"not_approved", detail:"Не одобрен ни одним регулятором; регуляторы Великобритании, Австралии и США выпускали предупреждения о безопасности."},
+    wada:{status:"banned", detail:"Категория S0 — запрещён как неодобренное вещество."},
+    desc:"Немодифицированный предшественник PT-141, воздействующий широко на рецепторы MC1–MC5. Помимо полового возбуждения вызывает потемнение кожи; описаны случаи потемнения родинок и меланомы.",
+    studies:[
+      {title:"Сравнение PT-141 и меланотана II", meta:"Peptidepedia, 2026", summary:"Подчёркивает более широкий рецепторный профиль и более высокий риск побочных эффектов у меланотана II по сравнению с регистрированным PT-141.", url:"https://peptidepedia.org/guides/pt-141-vs-melanotan-ii"}
+    ],
+    safety:"Задокументированы случаи потемнения/изменения родинок и отдельные случаи меланомы; риск приапизма выше, чем у PT-141."
+  },
+  {
+    name:"DSIP",
+    alias:"Delta Sleep-Inducing Peptide, нонапептид",
+    groups:["Сон"],
+    evidence:"preclinical",
+    evidenceNote:"Противоречивые результаты у людей при интересных данных о долголетии у мышей",
+    regulatory:{status:"not_approved", detail:"Не одобрен ни одним регулятором; рецептор и ген пептида до сих пор не идентифицированы."},
+    wada:{status:"unclear", detail:"Явно не назван в списке WADA 2026."},
+    desc:"Открыт в 1977 г. при изучении дельта-волн сна у кроликов. Несмотря на почти 50 лет исследований, механизм действия остаётся неясным — не найден ни ген, ни специфический рецептор.",
+    studies:[
+      {title:"Эффективность при хронической бессоннице", meta:"PubMed, двойное слепое перекрёстное исследование", summary:"Общее время сна и NREM-сон увеличивались, но статистически значимых различий с плацебо по большинству показателей не обнаружено.", url:"https://pubmed.ncbi.nlm.nih.gov/3583493/"},
+      {title:"Продолжительность жизни у стареющих мышей", meta:"цитируется в обзоре PeptideJournal", summary:"Средняя продолжительность жизни значимо не изменилась, но максимальная продолжительность жизни выросла, а частота спонтанных опухолей снизилась почти в 2,6 раза — данные одного штамма мышей.", url:"https://www.peptidejournal.org/peptides/dsip-research-guide"}
+    ],
+    safety:"Описывается как исключительно нетоксичный в доклинике (не удалось определить LD50); человеческая доказательная база по эффективности слабая и противоречивая."
+  },
+  {
+    name:"Thymosin Alpha-1",
+    alias:"Zadaxin / тималфасин",
+    groups:["Иммунитет"],
+    evidence:"robust",
+    evidenceNote:"Одобрен в 35+ странах; более 80 клинических испытаний и 4400+ пациентов, но не одобрен FDA/EMA",
+    regulatory:{status:"approved", detail:"Одобрен как Zadaxin в 35+ странах (Китай, Италия и др.) для хронического гепатита В. В США имеет статус orphan drug, но не получил полного одобрения FDA; с февраля 2026 г. ограничен для компаундирования (категория 2)."},
+    wada:{status:"unclear", detail:"Явно не назван в списке WADA 2026 как отдельная категория иммунных пептидов."},
+    desc:"28-аминокислотный тимический пептид, активирующий Toll-like рецептор 9 на дендритных клетках и смещающий иммунный ответ в сторону Th1. Один из наиболее клинически изученных пептидов в этом реестре по объёму формальных испытаний.",
+    studies:[
+      {title:"Пивотальное РКИ при хроническом гепатите В", meta:"1998, n=98", summary:"Полный вирусологический ответ у 40,6% пациентов на терапии против 9,4% в контрольной группе.", url:"https://superpower.com/guides/thymosin-alpha-1"},
+      {title:"Фаза III при хроническом гепатите В", meta:"Chien et al., 2006", summary:"Устойчивый вирусологический ответ на 72-й неделе: 36% против 19,5% в группе плацебо.", url:"https://peptideevidence.com/peptides/thymosin-alpha-1/"}
+    ],
+    safety:"Один из наиболее «чистых» пептидов по профилю безопасности: за десятилетия наблюдений — преимущественно лёгкие реакции в месте инъекции и редкая транзиторная лихорадка."
+  },
+  {
+    name:"Семаглутид / Тирзепатид",
+    alias:"Ozempic/Wegovy · Mounjaro/Zepbound — агонисты GLP-1",
+    groups:["Метаболизм","Долголетие"],
+    evidence:"robust",
+    evidenceNote:"Grade A: крупные РКИ фазы III и исследования сердечно-сосудистых исходов",
+    regulatory:{status:"approved", detail:"Одобрены FDA/EMA для диабета 2 типа и лечения ожирения; включены в реестр как метаболические пептиды, часто рассматриваемые в контексте продления жизни за счёт снижения веса и метаболических рисков."},
+    wada:{status:"monitored", detail:"С 2024 г. в программе мониторинга WADA (не запрещены). С 1 января 2026 г. в мониторинг добавлены также маркеры тирзепатида. Решение о полном запрете ожидается не ранее конца 2026–2027 гг."},
+    desc:"Формально не «экспериментальные» пептиды, но входят в любой современный обзор пептидной терапии как наиболее доказательно обоснованный класс с потенциальным влиянием на здоровое старение через метаболическое здоровье.",
+    studies:[
+      {title:"12-месячное наблюдательное исследование программы снижения веса", meta:"n=339, ретроспективный анализ", summary:"Сравнение тирзепатида и семаглутида в рамках дистанционной программы снижения веса с клиническим сопровождением показало клинически значимое снижение массы тела в обеих группах.", url:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12475876/"}
+    ],
+    safety:"Наиболее полная доказательная база по безопасности среди всех веществ реестра (крупные РКИ, включая сердечно-сосудистые исходы); типичные эффекты — тошнота, замедление моторики ЖКТ."
+  }
+];
+
+// ---------- render logic ----------
+const groupSet = new Set();
+DATA.forEach(p => p.groups.forEach(g => groupSet.add(g)));
+const groupFilter = document.getElementById('groupFilter');
+[...groupSet].sort().forEach(g=>{
+  const opt = document.createElement('option');
+  opt.value = g; opt.textContent = g;
+  groupFilter.appendChild(opt);
+});
+
+const evidenceLevels = {preclinical:1, limited:2, robust:3};
+const evidenceLabels = {preclinical:"Доклиника / единичные случаи", limited:"Ограниченные данные на людях", robust:"Надёжные клинические данные"};
+
+const regBadge = (r) => r.status === "approved"
+  ? `<span class="badge b-teal">✓ Одобрен: ${r.detail.split('.')[0]}</span>`
+  : `<span class="badge b-rust">✕ Не одобрен</span>`;
+
+const wadaBadge = (w) => {
+  if(w.status==="banned") return `<span class="badge b-rust">WADA: запрещён</span>`;
+  if(w.status==="monitored") return `<span class="badge b-amber">WADA: мониторится</span>`;
+  if(w.status==="not_banned") return `<span class="badge b-teal">WADA: разрешён</span>`;
+  return `<span class="badge b-slate">WADA: неоднозначно</span>`;
+};
+
+function gauge(level){
+  const n = evidenceLevels[level];
+  let segs = "";
+  for(let i=1;i<=3;i++){
+    segs += `<div class="gauge-seg ${i<=n ? (level==='robust'?'on':'on-amber') : ''}"></div>`;
+  }
+  return `<div class="gauge-wrap"><div class="gauge-label">${evidenceLabels[level]}</div><div class="gauge">${segs}</div></div>`;
+}
+
+function studyHtml(s){
+  return `<div class="study">
+    <div class="study-title">${s.title}</div>
+    <div class="study-meta">${s.meta}</div>
+    <div class="study-summary">${s.summary}</div>
+    <a href="${s.url}" target="_blank" rel="noopener">Источник →</a>
+  </div>`;
+}
+
+function cardHtml(p){
+  return `<div class="card" data-name="${p.name.toLowerCase()}" data-groups="${p.groups.join(',')}" data-evidence="${p.evidence}" data-reg="${p.regulatory.status}" data-wada="${p.wada.status}">
+    <div class="card-top">
+      <div>
+        <div class="card-title">${p.name}</div>
+        <div class="card-alias">${p.alias}</div>
+      </div>
+    </div>
+    <div class="tags">${p.groups.map(g=>`<span class="tag">${g}</span>`).join('')}</div>
+    <div class="badges">${regBadge(p.regulatory)}${wadaBadge(p.wada)}</div>
+    ${gauge(p.evidence)}
+    <p class="desc">${p.desc}</p>
+    <details>
+      <summary>Ключевые исследования (${p.studies.length})</summary>
+      ${p.studies.map(studyHtml).join('')}
+      <div class="safety"><b>Безопасность:</b> ${p.safety}</div>
+      <div class="safety" style="border-color:var(--slate); margin-top:8px;"><b>Регуляторный статус:</b> ${p.regulatory.detail}</div>
+      <div class="safety" style="border-color:var(--rust); margin-top:8px;"><b>WADA:</b> ${p.wada.detail}</div>
+    </details>
+  </div>`;
+}
+
+function render(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const g = document.getElementById('groupFilter').value;
+  const ev = document.getElementById('evidenceFilter').value;
+  const reg = document.getElementById('regFilter').value;
+  const wd = document.getElementById('wadaFilter').value;
+
+  const filtered = DATA.filter(p=>{
+    if(q && !p.name.toLowerCase().includes(q) && !p.alias.toLowerCase().includes(q)) return false;
+    if(g!=="all" && !p.groups.includes(g)) return false;
+    if(ev!=="all" && p.evidence!==ev) return false;
+    if(reg!=="all" && p.regulatory.status!==reg) return false;
+    if(wd!=="all" && p.wada.status!==wd) return false;
+    return true;
+  });
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = filtered.length
+    ? filtered.map(cardHtml).join('')
+    : `<div class="no-results">Ничего не найдено — попробуйте изменить фильтры.</div>`;
+
+  document.getElementById('countLine').textContent = `Показано ${filtered.length} из ${DATA.length}`;
+}
+
+document.getElementById('totalCount').textContent = DATA.length;
+['searchInput','groupFilter','evidenceFilter','regFilter','wadaFilter'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', render);
+  document.getElementById(id).addEventListener('change', render);
+});
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  document.getElementById('searchInput').value = "";
+  document.getElementById('groupFilter').value = "all";
+  document.getElementById('evidenceFilter').value = "all";
+  document.getElementById('regFilter').value = "all";
+  document.getElementById('wadaFilter').value = "all";
+  render();
+});
+
+render();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
